@@ -1,6 +1,6 @@
-# coding: windows-1251
+# coding: utf-8
 
-# # Парсер статей Хабра Хабра
+# # РџР°СЂСЃРµСЂ СЃС‚Р°С‚РµР№ РҐР°Р±СЂР° РҐР°Р±СЂР°
 import logging
 import requests
 from tqdm.asyncio import tqdm_asyncio
@@ -21,51 +21,51 @@ nest_asyncio.apply()
 pd.options.display.max_colwidth = 90
 
 
-# ##Random user agent, куки и хэдэр
-# Функция для создания случайного user_agent
+# ##Random user agent, РєСѓРєРё Рё С…СЌРґСЌСЂ
+# Р¤СѓРЅРєС†РёСЏ РґР»СЏ СЃРѕР·РґР°РЅРёСЏ СЃР»СѓС‡Р°Р№РЅРѕРіРѕ user_agent
 def get_random_user_agent() -> str:
     """
-    Возвращает случайный User-Agent для использования в HTTP-запросах
+    Р’РѕР·РІСЂР°С‰Р°РµС‚ СЃР»СѓС‡Р°Р№РЅС‹Р№ User-Agent РґР»СЏ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЏ РІ HTTP-Р·Р°РїСЂРѕСЃР°С…
 
-    В случае ошибки при генерации случайного User-Agent возвращает стандартный User-Agent
+    Р’ СЃР»СѓС‡Р°Рµ РѕС€РёР±РєРё РїСЂРё РіРµРЅРµСЂР°С†РёРё СЃР»СѓС‡Р°Р№РЅРѕРіРѕ User-Agent РІРѕР·РІСЂР°С‰Р°РµС‚ СЃС‚Р°РЅРґР°СЂС‚РЅС‹Р№ User-Agent
 
-    Возвращает:
-        str: Случайный User-Agent или стандартный User-Agent (если произошла ошибка)
+    Р’РѕР·РІСЂР°С‰Р°РµС‚:
+        str: РЎР»СѓС‡Р°Р№РЅС‹Р№ User-Agent РёР»Рё СЃС‚Р°РЅРґР°СЂС‚РЅС‹Р№ User-Agent (РµСЃР»Рё РїСЂРѕРёР·РѕС€Р»Р° РѕС€РёР±РєР°)
     """
     try:
         ua = UserAgent()
         return ua.random
     except FakeUserAgentError:
-        # Используем стандартный User-Agent в случае ошибки
+        # РСЃРїРѕР»СЊР·СѓРµРј СЃС‚Р°РЅРґР°СЂС‚РЅС‹Р№ User-Agent РІ СЃР»СѓС‡Р°Рµ РѕС€РёР±РєРё
         return 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
 
 
-# Задаём дефолтные куки и заголовок
+# Р—Р°РґР°С‘Рј РґРµС„РѕР»С‚РЅС‹Рµ РєСѓРєРё Рё Р·Р°РіРѕР»РѕРІРѕРє
 cookies = {'hl': 'ru'}
 headers = {
         'User-Agent': get_random_user_agent(),
         'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'
         }
 
-# ## Парсер хабов
+# ## РџР°СЂСЃРµСЂ С…Р°Р±РѕРІ
 
 
-# Функция для получения информации о хабах
+# Р¤СѓРЅРєС†РёСЏ РґР»СЏ РїРѕР»СѓС‡РµРЅРёСЏ РёРЅС„РѕСЂРјР°С†РёРё Рѕ С…Р°Р±Р°С…
 def parse_habr_hubs():
     """
-    Парсит информацию о хабах с Хабра Хабра и возвращает данные в виде DataFrame
-    Функция последовательно проходит страницы хабов, извлекая название, описание,
-    URL-адрес, рейтинг и количество подписчиков каждого хаба
+    РџР°СЂСЃРёС‚ РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ С…Р°Р±Р°С… СЃ РҐР°Р±СЂР° РҐР°Р±СЂР° Рё РІРѕР·РІСЂР°С‰Р°РµС‚ РґР°РЅРЅС‹Рµ РІ РІРёРґРµ DataFrame
+    Р¤СѓРЅРєС†РёСЏ РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕ РїСЂРѕС…РѕРґРёС‚ СЃС‚СЂР°РЅРёС†С‹ С…Р°Р±РѕРІ, РёР·РІР»РµРєР°СЏ РЅР°Р·РІР°РЅРёРµ, РѕРїРёСЃР°РЅРёРµ,
+    URL-Р°РґСЂРµСЃ, СЂРµР№С‚РёРЅРі Рё РєРѕР»РёС‡РµСЃС‚РІРѕ РїРѕРґРїРёСЃС‡РёРєРѕРІ РєР°Р¶РґРѕРіРѕ С…Р°Р±Р°
 
-    Возвращает:
-        pd.DataFrame: Таблица с информацией о хабах, где каждая строка представляет один хаб
+    Р’РѕР·РІСЂР°С‰Р°РµС‚:
+        pd.DataFrame: РўР°Р±Р»РёС†Р° СЃ РёРЅС„РѕСЂРјР°С†РёРµР№ Рѕ С…Р°Р±Р°С…, РіРґРµ РєР°Р¶РґР°СЏ СЃС‚СЂРѕРєР° РїСЂРµРґСЃС‚Р°РІР»СЏРµС‚ РѕРґРёРЅ С…Р°Р±
 
-    Столбцы в возвращаемом датафрейме:
-        - Название хаба (Title)
-        - Описание хаба (Description)
-        - URL-адрес хаба (URL)
-        - Рейтинг хаба (Rating)
-        - Количество подписчиков (Subscribers_cnt)
+    РЎС‚РѕР»Р±С†С‹ РІ РІРѕР·РІСЂР°С‰Р°РµРјРѕРј РґР°С‚Р°С„СЂРµР№РјРµ:
+        - РќР°Р·РІР°РЅРёРµ С…Р°Р±Р° (Title)
+        - РћРїРёСЃР°РЅРёРµ С…Р°Р±Р° (Description)
+        - URL-Р°РґСЂРµСЃ С…Р°Р±Р° (URL)
+        - Р РµР№С‚РёРЅРі С…Р°Р±Р° (Rating)
+        - РљРѕР»РёС‡РµСЃС‚РІРѕ РїРѕРґРїРёСЃС‡РёРєРѕРІ (Subscribers_cnt)
     """
     page_number = 1
     all_titles: List[str] = []
@@ -78,51 +78,51 @@ def parse_habr_hubs():
         url = f'https://habr.com/ru/hubs/page{page_number}/'
         response = requests.get(url, headers=headers, cookies=cookies)
         if response.status_code != 200:
-            print(f"Ошибка при получении URL: {response.status_code}")
+            print(f"РћС€РёР±РєР° РїСЂРё РїРѕР»СѓС‡РµРЅРёРё URL: {response.status_code}")
             break
 
         soup = BeautifulSoup(response.content, 'html.parser')
 
-        # Проверяем, есть ли на странице хабы
+        # РџСЂРѕРІРµСЂСЏРµРј, РµСЃС‚СЊ Р»Рё РЅР° СЃС‚СЂР°РЅРёС†Рµ С…Р°Р±С‹
         hub_elements = soup.find_all('a', class_='tm-hub__title')
         if not hub_elements:
-            print("Достигнут конец списка хабов")
-            break  # Если хабов нет, выходим из цикла
+            print("Р”РѕСЃС‚РёРіРЅСѓС‚ РєРѕРЅРµС† СЃРїРёСЃРєР° С…Р°Р±РѕРІ")
+            break  # Р•СЃР»Рё С…Р°Р±РѕРІ РЅРµС‚, РІС‹С…РѕРґРёРј РёР· С†РёРєР»Р°
 
-        # Названия хабов
+        # РќР°Р·РІР°РЅРёСЏ С…Р°Р±РѕРІ
         titles = [title.get_text(strip=True) for title in hub_elements]
         all_titles.extend(titles)
 
-        # Извлечение описания хабов
+        # РР·РІР»РµС‡РµРЅРёРµ РѕРїРёСЃР°РЅРёСЏ С…Р°Р±РѕРІ
         description_elements = soup.find_all('div',
                                              class_='tm-hub__description')
         descriptions = [descr.get_text(strip=True)
                         for descr in description_elements]
         all_descriptions.extend(descriptions)
 
-        # Ссылки на хабы
+        # РЎСЃС‹Р»РєРё РЅР° С…Р°Р±С‹
         urls = ['https://habr.com' + url['href'] for url in hub_elements]
         all_urls.extend(urls)
 
-        # Рейтинги хабов
+        # Р РµР№С‚РёРЅРіРё С…Р°Р±РѕРІ
         rating_elements = soup.find_all('div',
                                         class_='tm-hubs-list__hub-rating')
         ratings = []
         for rating in rating_elements:
-            rating_text = rating.get_text(strip=True).replace('Рейтинг', '')
+            rating_text = rating.get_text(strip=True).replace('Р РµР№С‚РёРЅРі', '')
             try:
                 ratings.append(int(float(rating_text)))
             except ValueError:
                 ratings.append(None)
         all_ratings.extend(ratings)
 
-        # Количество подписчиков хаба
+        # РљРѕР»РёС‡РµСЃС‚РІРѕ РїРѕРґРїРёСЃС‡РёРєРѕРІ С…Р°Р±Р°
         subscriber_elements = soup.find_all('div',
                                             class_='tm-hubs-list__hub-subscribers')
         subscribers = []
         for subscriber in subscriber_elements:
-            text = subscriber.get_text(strip=True).replace('Подписчики', '')
-            # Преобразуем количество подписчиков (в тысячах) в число
+            text = subscriber.get_text(strip=True).replace('РџРѕРґРїРёСЃС‡РёРєРё', '')
+            # РџСЂРµРѕР±СЂР°Р·СѓРµРј РєРѕР»РёС‡РµСЃС‚РІРѕ РїРѕРґРїРёСЃС‡РёРєРѕРІ (РІ С‚С‹СЃСЏС‡Р°С…) РІ С‡РёСЃР»Рѕ
             if 'K' in text:
                 subscribers.append(int(float(
                     text.replace('K', '').replace(',', '.')) * 1000))
@@ -133,12 +133,12 @@ def parse_habr_hubs():
                     subscribers.append(None)
         all_subscribers.extend(subscribers)
 
-        print(f"Страница {page_number} обработана")
+        print(f"РЎС‚СЂР°РЅРёС†Р° {page_number} РѕР±СЂР°Р±РѕС‚Р°РЅР°")
         page_number += 1
-        # Случайная задержка от 1 до 3 секунд, чтобы не словить блок от сервера
+        # РЎР»СѓС‡Р°Р№РЅР°СЏ Р·Р°РґРµСЂР¶РєР° РѕС‚ 1 РґРѕ 3 СЃРµРєСѓРЅРґ, С‡С‚РѕР±С‹ РЅРµ СЃР»РѕРІРёС‚СЊ Р±Р»РѕРє РѕС‚ СЃРµСЂРІРµСЂР°
         time.sleep(randint(1, 3))
 
-    # Создание DataFrame со всеми хабами
+    # РЎРѕР·РґР°РЅРёРµ DataFrame СЃРѕ РІСЃРµРјРё С…Р°Р±Р°РјРё
     data = {
         'Title': all_titles,
         'Description': all_descriptions,
@@ -149,33 +149,33 @@ def parse_habr_hubs():
     return df
 
 
-# ## Добавление количества страниц внутри хабов
+# ## Р”РѕР±Р°РІР»РµРЅРёРµ РєРѕР»РёС‡РµСЃС‚РІР° СЃС‚СЂР°РЅРёС† РІРЅСѓС‚СЂРё С…Р°Р±РѕРІ
 
-# Ограничение на 20 одновременных запросов через Semaphore
+# РћРіСЂР°РЅРёС‡РµРЅРёРµ РЅР° 20 РѕРґРЅРѕРІСЂРµРјРµРЅРЅС‹С… Р·Р°РїСЂРѕСЃРѕРІ С‡РµСЂРµР· Semaphore
 semaphore = asyncio.Semaphore(20)
 
 
-# Асинхронная функция для получения количества страниц внутри хабов
+# РђСЃРёРЅС…СЂРѕРЅРЅР°СЏ С„СѓРЅРєС†РёСЏ РґР»СЏ РїРѕР»СѓС‡РµРЅРёСЏ РєРѕР»РёС‡РµСЃС‚РІР° СЃС‚СЂР°РЅРёС† РІРЅСѓС‚СЂРё С…Р°Р±РѕРІ
 async def get_hub_pages_count_async(hub_url: str,
                                     session: aiohttp.ClientSession) -> int:
     """
-    Асинхронно получает количество страниц внутри хаба по URL
-    Параметры:
-        hub_url (str): URL-адрес хаба, откуда нужно получить количество страниц
-        session (aiohttp.ClientSession): Сессия для выполнения асинхронного запроса
-    Возвращает:
-        int: Общее количество страниц в хабе или None (если произошла ошибка)
+    РђСЃРёРЅС…СЂРѕРЅРЅРѕ РїРѕР»СѓС‡Р°РµС‚ РєРѕР»РёС‡РµСЃС‚РІРѕ СЃС‚СЂР°РЅРёС† РІРЅСѓС‚СЂРё С…Р°Р±Р° РїРѕ URL
+    РџР°СЂР°РјРµС‚СЂС‹:
+        hub_url (str): URL-Р°РґСЂРµСЃ С…Р°Р±Р°, РѕС‚РєСѓРґР° РЅСѓР¶РЅРѕ РїРѕР»СѓС‡РёС‚СЊ РєРѕР»РёС‡РµСЃС‚РІРѕ СЃС‚СЂР°РЅРёС†
+        session (aiohttp.ClientSession): РЎРµСЃСЃРёСЏ РґР»СЏ РІС‹РїРѕР»РЅРµРЅРёСЏ Р°СЃРёРЅС…СЂРѕРЅРЅРѕРіРѕ Р·Р°РїСЂРѕСЃР°
+    Р’РѕР·РІСЂР°С‰Р°РµС‚:
+        int: РћР±С‰РµРµ РєРѕР»РёС‡РµСЃС‚РІРѕ СЃС‚СЂР°РЅРёС† РІ С…Р°Р±Рµ РёР»Рё None (РµСЃР»Рё РїСЂРѕРёР·РѕС€Р»Р° РѕС€РёР±РєР°)
     """
     async with semaphore:
         try:
             async with session.get(hub_url, cookies=cookies) as response:
                 if response.status != 200:
-                    print(f"Ошибка при получении страницы хаба {hub_url}: {response.status}")
+                    print(f"РћС€РёР±РєР° РїСЂРё РїРѕР»СѓС‡РµРЅРёРё СЃС‚СЂР°РЅРёС†С‹ С…Р°Р±Р° {hub_url}: {response.status}")
                     return None
                 content = await response.text()
                 soup = BeautifulSoup(content, 'html.parser')
 
-                # Находим блок пагинации
+                # РќР°С…РѕРґРёРј Р±Р»РѕРє РїР°РіРёРЅР°С†РёРё
                 pagination = soup.find('div', class_='tm-pagination')
                 if pagination:
                     pages = pagination.find_all('a',
@@ -192,39 +192,39 @@ async def get_hub_pages_count_async(hub_url: str,
                     total_pages = 1
                 return total_pages
         except aiohttp.ClientError as e:
-            print(f"Исключение при получении {hub_url}: {e}")
+            print(f"РСЃРєР»СЋС‡РµРЅРёРµ РїСЂРё РїРѕР»СѓС‡РµРЅРёРё {hub_url}: {e}")
         return None
 
 
-# Функция для сбора результатов со всех страниц
+# Р¤СѓРЅРєС†РёСЏ РґР»СЏ СЃР±РѕСЂР° СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ СЃРѕ РІСЃРµС… СЃС‚СЂР°РЅРёС†
 async def process_urls(urls: List[str]) -> List[int]:
     """
-    Асинхронно обрабатывает список URL, извлекая количество страниц для каждого хаба
+    РђСЃРёРЅС…СЂРѕРЅРЅРѕ РѕР±СЂР°Р±Р°С‚С‹РІР°РµС‚ СЃРїРёСЃРѕРє URL, РёР·РІР»РµРєР°СЏ РєРѕР»РёС‡РµСЃС‚РІРѕ СЃС‚СЂР°РЅРёС† РґР»СЏ РєР°Р¶РґРѕРіРѕ С…Р°Р±Р°
 
-    Параметры:
-        urls (List[str]): Список URL-адресов хабов для обработки
+    РџР°СЂР°РјРµС‚СЂС‹:
+        urls (List[str]): РЎРїРёСЃРѕРє URL-Р°РґСЂРµСЃРѕРІ С…Р°Р±РѕРІ РґР»СЏ РѕР±СЂР°Р±РѕС‚РєРё
 
-    Возвращает:
-        List[int]: Список, содержащий количество страниц для каждого хаба
-                    или None (если произошла ошибка)
+    Р’РѕР·РІСЂР°С‰Р°РµС‚:
+        List[int]: РЎРїРёСЃРѕРє, СЃРѕРґРµСЂР¶Р°С‰РёР№ РєРѕР»РёС‡РµСЃС‚РІРѕ СЃС‚СЂР°РЅРёС† РґР»СЏ РєР°Р¶РґРѕРіРѕ С…Р°Р±Р°
+                    РёР»Рё None (РµСЃР»Рё РїСЂРѕРёР·РѕС€Р»Р° РѕС€РёР±РєР°)
     """
     async with aiohttp.ClientSession(headers=headers) as session:
         tasks = [get_hub_pages_count_async(url, session) for url in urls]
-        results = await tqdm_asyncio.gather(*tasks, desc='Получаем количество страниц в хабах')
+        results = await tqdm_asyncio.gather(*tasks, desc='РџРѕР»СѓС‡Р°РµРј РєРѕР»РёС‡РµСЃС‚РІРѕ СЃС‚СЂР°РЅРёС† РІ С…Р°Р±Р°С…')
     return results
 
 
-# Асинхронная функция получения HTML-контента
+# РђСЃРёРЅС…СЂРѕРЅРЅР°СЏ С„СѓРЅРєС†РёСЏ РїРѕР»СѓС‡РµРЅРёСЏ HTML-РєРѕРЅС‚РµРЅС‚Р°
 async def fetch(session: aiohttp.ClientSession, url: str) -> str:
     """
-    Асинхронно выполняет запрос для получения HTML-контента страницы по URL
+    РђСЃРёРЅС…СЂРѕРЅРЅРѕ РІС‹РїРѕР»РЅСЏРµС‚ Р·Р°РїСЂРѕСЃ РґР»СЏ РїРѕР»СѓС‡РµРЅРёСЏ HTML-РєРѕРЅС‚РµРЅС‚Р° СЃС‚СЂР°РЅРёС†С‹ РїРѕ URL
 
-    Параметры:
-        session (aiohttp.ClientSession): Асинхронная сессия для выполнения HTTP-запроса
-        url (str): URL-адрес страницы, которую хотим загрузить
+    РџР°СЂР°РјРµС‚СЂС‹:
+        session (aiohttp.ClientSession): РђСЃРёРЅС…СЂРѕРЅРЅР°СЏ СЃРµСЃСЃРёСЏ РґР»СЏ РІС‹РїРѕР»РЅРµРЅРёСЏ HTTP-Р·Р°РїСЂРѕСЃР°
+        url (str): URL-Р°РґСЂРµСЃ СЃС‚СЂР°РЅРёС†С‹, РєРѕС‚РѕСЂСѓСЋ С…РѕС‚РёРј Р·Р°РіСЂСѓР·РёС‚СЊ
 
-    Возвращает:
-        str: Текстовый контент страницы или None (в случае ошибки)
+    Р’РѕР·РІСЂР°С‰Р°РµС‚:
+        str: РўРµРєСЃС‚РѕРІС‹Р№ РєРѕРЅС‚РµРЅС‚ СЃС‚СЂР°РЅРёС†С‹ РёР»Рё None (РІ СЃР»СѓС‡Р°Рµ РѕС€РёР±РєРё)
     """
     async with semaphore:
         try:
@@ -234,29 +234,29 @@ async def fetch(session: aiohttp.ClientSession, url: str) -> str:
                     await asyncio.sleep(randint(1, 3))
                     return content
                 else:
-                    print(f"Ошибка при получении {url}: {response.status}")
+                    print(f"РћС€РёР±РєР° РїСЂРё РїРѕР»СѓС‡РµРЅРёРё {url}: {response.status}")
                     await asyncio.sleep(randint(1, 3))
                     return None
         except Exception as e:
-            print(f"Исключение при получении {url}: {e}")
+            print(f"РСЃРєР»СЋС‡РµРЅРёРµ РїСЂРё РїРѕР»СѓС‡РµРЅРёРё {url}: {e}")
             await asyncio.sleep(randint(1, 3))
             return None
 
 
-# Асинхронная функция парсинга статьи из HTML контента
+# РђСЃРёРЅС…СЂРѕРЅРЅР°СЏ С„СѓРЅРєС†РёСЏ РїР°СЂСЃРёРЅРіР° СЃС‚Р°С‚СЊРё РёР· HTML РєРѕРЅС‚РµРЅС‚Р°
 async def parse_articles_from_content(content: str,
                                       hub_name: str,
                                       df_full: pd.DataFrame) -> List[Dict[str, str]]:
     """
-    Парсит статьи из HTML-контента
+    РџР°СЂСЃРёС‚ СЃС‚Р°С‚СЊРё РёР· HTML-РєРѕРЅС‚РµРЅС‚Р°
 
-    Параметры:
-        content (str): HTML-контент страницы
-        hub_name (str): Название хаба, к которому относятся статьи
-        df_full (pd.DataFrame): DataFrame, содержащий собранные статьи (для исключения дублей)
+    РџР°СЂР°РјРµС‚СЂС‹:
+        content (str): HTML-РєРѕРЅС‚РµРЅС‚ СЃС‚СЂР°РЅРёС†С‹
+        hub_name (str): РќР°Р·РІР°РЅРёРµ С…Р°Р±Р°, Рє РєРѕС‚РѕСЂРѕРјСѓ РѕС‚РЅРѕСЃСЏС‚СЃСЏ СЃС‚Р°С‚СЊРё
+        df_full (pd.DataFrame): DataFrame, СЃРѕРґРµСЂР¶Р°С‰РёР№ СЃРѕР±СЂР°РЅРЅС‹Рµ СЃС‚Р°С‚СЊРё (РґР»СЏ РёСЃРєР»СЋС‡РµРЅРёСЏ РґСѓР±Р»РµР№)
 
-    Возвращает:
-        List[Dict[str, str]]: Список словарей с информацией о статьях (заголовок, URL и хаб)
+    Р’РѕР·РІСЂР°С‰Р°РµС‚:
+        List[Dict[str, str]]: РЎРїРёСЃРѕРє СЃР»РѕРІР°СЂРµР№ СЃ РёРЅС„РѕСЂРјР°С†РёРµР№ Рѕ СЃС‚Р°С‚СЊСЏС… (Р·Р°РіРѕР»РѕРІРѕРє, URL Рё С…Р°Р±)
     """
     soup = BeautifulSoup(content, 'html.parser')
     articles = []
@@ -265,36 +265,36 @@ async def parse_articles_from_content(content: str,
     for article in article_elements:
         title = article.get_text(strip=True)
         link = 'https://habr.com' + article['href']
-        if len(df_full[df_full['URL'] == link]) < 1:  # условие, чтобы исключить дубли статей
+        if len(df_full[df_full['URL'] == link]) < 1:  # СѓСЃР»РѕРІРёРµ, С‡С‚РѕР±С‹ РёСЃРєР»СЋС‡РёС‚СЊ РґСѓР±Р»Рё СЃС‚Р°С‚РµР№
             articles.append({'Title': title, 'URL': link, 'Hub': hub_name})
 
     return articles
 
 
-# Асинхронная функция парсинга статей в хабе
+# РђСЃРёРЅС…СЂРѕРЅРЅР°СЏ С„СѓРЅРєС†РёСЏ РїР°СЂСЃРёРЅРіР° СЃС‚Р°С‚РµР№ РІ С…Р°Р±Рµ
 async def parse_habr_articles_in_hub(hub_url: str, df_full: pd.DataFrame) -> pd.DataFrame:
     """
-    Асинхронно парсит статьи из хаба, извлекая все страницы и ссылки на статьи
+    РђСЃРёРЅС…СЂРѕРЅРЅРѕ РїР°СЂСЃРёС‚ СЃС‚Р°С‚СЊРё РёР· С…Р°Р±Р°, РёР·РІР»РµРєР°СЏ РІСЃРµ СЃС‚СЂР°РЅРёС†С‹ Рё СЃСЃС‹Р»РєРё РЅР° СЃС‚Р°С‚СЊРё
 
-    Параметры:
-        hub_url (str): URL-адрес хаба, из которого извлекаются статьи
-        df_full (pd.DataFrame): DataFrame, содержащий собранные статьи (для исключения дублей)
+    РџР°СЂР°РјРµС‚СЂС‹:
+        hub_url (str): URL-Р°РґСЂРµСЃ С…Р°Р±Р°, РёР· РєРѕС‚РѕСЂРѕРіРѕ РёР·РІР»РµРєР°СЋС‚СЃСЏ СЃС‚Р°С‚СЊРё
+        df_full (pd.DataFrame): DataFrame, СЃРѕРґРµСЂР¶Р°С‰РёР№ СЃРѕР±СЂР°РЅРЅС‹Рµ СЃС‚Р°С‚СЊРё (РґР»СЏ РёСЃРєР»СЋС‡РµРЅРёСЏ РґСѓР±Р»РµР№)
 
-    Возвращает:
-        pd.DataFrame: DataFrame со статьями из хаба, где есть название статьи, URL и название хаба
+    Р’РѕР·РІСЂР°С‰Р°РµС‚:
+        pd.DataFrame: DataFrame СЃРѕ СЃС‚Р°С‚СЊСЏРјРё РёР· С…Р°Р±Р°, РіРґРµ РµСЃС‚СЊ РЅР°Р·РІР°РЅРёРµ СЃС‚Р°С‚СЊРё, URL Рё РЅР°Р·РІР°РЅРёРµ С…Р°Р±Р°
     """
     all_articles = []
 
     async with aiohttp.ClientSession() as session:
-        # Получение главной страницы хаба
+        # РџРѕР»СѓС‡РµРЅРёРµ РіР»Р°РІРЅРѕР№ СЃС‚СЂР°РЅРёС†С‹ С…Р°Р±Р°
         response = await fetch(session, hub_url)
         if not response:
-            print(f"Не удалось получить главную страницу хаба: {hub_url}")
+            print(f"РќРµ СѓРґР°Р»РѕСЃСЊ РїРѕР»СѓС‡РёС‚СЊ РіР»Р°РІРЅСѓСЋ СЃС‚СЂР°РЅРёС†Сѓ С…Р°Р±Р°: {hub_url}")
             return None
 
         soup = BeautifulSoup(response, 'html.parser')
 
-        # Извлечение названия хаба
+        # РР·РІР»РµС‡РµРЅРёРµ РЅР°Р·РІР°РЅРёСЏ С…Р°Р±Р°
         hub_name_element = soup.find(
             'h1', class_='tm-hub-card__name tm-hub-card__name_variant-base tm-hub-card__name')
         if hub_name_element:
@@ -302,9 +302,9 @@ async def parse_habr_articles_in_hub(hub_url: str, df_full: pd.DataFrame) -> pd.
         else:
             hub_name = 'Unknown'
 
-        print(f"Парсинг хаба: {hub_name}")
+        print(f"РџР°СЂСЃРёРЅРі С…Р°Р±Р°: {hub_name}")
 
-        # Находим общее количество страниц
+        # РќР°С…РѕРґРёРј РѕР±С‰РµРµ РєРѕР»РёС‡РµСЃС‚РІРѕ СЃС‚СЂР°РЅРёС†
         pagination = soup.find('div', class_='tm-pagination')
         if pagination:
             pages = pagination.find_all('a', class_='tm-pagination__page')
@@ -319,47 +319,47 @@ async def parse_habr_articles_in_hub(hub_url: str, df_full: pd.DataFrame) -> pd.
         else:
             total_pages = 1
 
-        # Создаем задачи для всех страниц
+        # РЎРѕР·РґР°РµРј Р·Р°РґР°С‡Рё РґР»СЏ РІСЃРµС… СЃС‚СЂР°РЅРёС†
         tasks = []
         for page in range(1, total_pages + 1):
             url = f"{hub_url}page{page}/"
             tasks.append(fetch(session, url))
 
-        # Запускаем задачи и собираем результаты
-        responses = await tqdm_asyncio.gather(*tasks, desc='Загрузка страниц')
+        # Р—Р°РїСѓСЃРєР°РµРј Р·Р°РґР°С‡Рё Рё СЃРѕР±РёСЂР°РµРј СЂРµР·СѓР»СЊС‚Р°С‚С‹
+        responses = await tqdm_asyncio.gather(*tasks, desc='Р—Р°РіСЂСѓР·РєР° СЃС‚СЂР°РЅРёС†')
 
-        # Парсим контента каждой страницы
+        # РџР°СЂСЃРёРј РєРѕРЅС‚РµРЅС‚Р° РєР°Р¶РґРѕР№ СЃС‚СЂР°РЅРёС†С‹
         for content in responses:
             if content:
                 articles = await parse_articles_from_content(content, hub_name, df_full)
                 all_articles.extend(articles)
 
-    # Создание DataFrame со всеми ссылками на статьи
+    # РЎРѕР·РґР°РЅРёРµ DataFrame СЃРѕ РІСЃРµРјРё СЃСЃС‹Р»РєР°РјРё РЅР° СЃС‚Р°С‚СЊРё
     df = pd.DataFrame(all_articles)
     return df
 
 
-# ## Парсер статей
+# ## РџР°СЂСЃРµСЂ СЃС‚Р°С‚РµР№
 
-# Асинхронный парсер статей
+# РђСЃРёРЅС…СЂРѕРЅРЅС‹Р№ РїР°СЂСЃРµСЂ СЃС‚Р°С‚РµР№
 async def parse_habr_article(
         url: str, session: aiohttp.ClientSession,
         semaphore: asyncio.Semaphore, counter: List[int],
         lock: asyncio.Lock) -> pd.DataFrame:
 
     """
-    Асинхронно парсит статью с Хабра по URL, извлекая данные страницы
+    РђСЃРёРЅС…СЂРѕРЅРЅРѕ РїР°СЂСЃРёС‚ СЃС‚Р°С‚СЊСЋ СЃ РҐР°Р±СЂР° РїРѕ URL, РёР·РІР»РµРєР°СЏ РґР°РЅРЅС‹Рµ СЃС‚СЂР°РЅРёС†С‹
 
-    Параметры:
-        url (str): URL-адрес статьи для парсинга
-        session (aiohttp.ClientSession): Асинхронная сессия для выполнения HTTP-запроса
-        semaphore (asyncio.Semaphore): Ограничение на одновременные запросы
-        counter (List[int]): Счётчик обработанных статей
-        lock (asyncio.Lock): Блокировка для безопасного обновления счётчика
+    РџР°СЂР°РјРµС‚СЂС‹:
+        url (str): URL-Р°РґСЂРµСЃ СЃС‚Р°С‚СЊРё РґР»СЏ РїР°СЂСЃРёРЅРіР°
+        session (aiohttp.ClientSession): РђСЃРёРЅС…СЂРѕРЅРЅР°СЏ СЃРµСЃСЃРёСЏ РґР»СЏ РІС‹РїРѕР»РЅРµРЅРёСЏ HTTP-Р·Р°РїСЂРѕСЃР°
+        semaphore (asyncio.Semaphore): РћРіСЂР°РЅРёС‡РµРЅРёРµ РЅР° РѕРґРЅРѕРІСЂРµРјРµРЅРЅС‹Рµ Р·Р°РїСЂРѕСЃС‹
+        counter (List[int]): РЎС‡С‘С‚С‡РёРє РѕР±СЂР°Р±РѕС‚Р°РЅРЅС‹С… СЃС‚Р°С‚РµР№
+        lock (asyncio.Lock): Р‘Р»РѕРєРёСЂРѕРІРєР° РґР»СЏ Р±РµР·РѕРїР°СЃРЅРѕРіРѕ РѕР±РЅРѕРІР»РµРЅРёСЏ СЃС‡С‘С‚С‡РёРєР°
 
-    Возвращает:
-        pd.DataFrame: DataFrame с информацией о статье (заголовок, автор, хабы и т.д.)
-            или None в случае ошибки
+    Р’РѕР·РІСЂР°С‰Р°РµС‚:
+        pd.DataFrame: DataFrame СЃ РёРЅС„РѕСЂРјР°С†РёРµР№ Рѕ СЃС‚Р°С‚СЊРµ (Р·Р°РіРѕР»РѕРІРѕРє, Р°РІС‚РѕСЂ, С…Р°Р±С‹ Рё С‚.Рґ.)
+            РёР»Рё None РІ СЃР»СѓС‡Р°Рµ РѕС€РёР±РєРё
     """
     async with semaphore:
         try:
@@ -368,50 +368,50 @@ async def parse_habr_article(
                     content = await response.text()
                     await asyncio.sleep(randint(1, 3))
                 else:
-                    logging.warning(f"Ошибка {response.status} при получении URL: {url}")
+                    logging.warning(f"РћС€РёР±РєР° {response.status} РїСЂРё РїРѕР»СѓС‡РµРЅРёРё URL: {url}")
                     await asyncio.sleep(randint(1, 3))
                     return None
         except Exception as e:
-            logging.exception(f"Исключение при получении {url}: {e}")
+            logging.exception(f"РСЃРєР»СЋС‡РµРЅРёРµ РїСЂРё РїРѕР»СѓС‡РµРЅРёРё {url}: {e}")
             await asyncio.sleep(randint(1, 3))
             return None
 
     try:
         soup = BeautifulSoup(content, 'html.parser')
 
-        # Название статьи
+        # РќР°Р·РІР°РЅРёРµ СЃС‚Р°С‚СЊРё
         title_text = soup.find('h1', class_='tm-title tm-title_h1')
         title = title_text.get_text(strip=True) if title_text else None
 
-        # Имя автора
+        # РРјСЏ Р°РІС‚РѕСЂР°
         author_text = soup.find('a', class_='tm-user-info__username')
         author = author_text.get_text(strip=True) if author_text else None
 
-        # Дата публикации
+        # Р”Р°С‚Р° РїСѓР±Р»РёРєР°С†РёРё
         date_text = soup.find('time')
         pub_date = pd.to_datetime(date_text['datetime']) if date_text else None
 
-        # Хабы
+        # РҐР°Р±С‹
         hub_elements = soup.find_all('a', class_='tm-hubs-list__link')
         hubs = [hub.get_text(strip=True) for hub in hub_elements]
 
-        # Статья компании или физ. лица
-        individual_or_company = ('company' if any('Блог компании' in x for x in hubs)
+        # РЎС‚Р°С‚СЊСЏ РєРѕРјРїР°РЅРёРё РёР»Рё С„РёР·. Р»РёС†Р°
+        individual_or_company = ('company' if any('Р‘Р»РѕРі РєРѕРјРїР°РЅРёРё' in x for x in hubs)
                                  else 'individual')
 
-        # Теги
+        # РўРµРіРё
         tag_elements = soup.find_all('a', class_='tm-tags-list__link')
         tags = [tag.get_text(strip=True) for tag in tag_elements]
 
-        # Содержимое статьи
+        # РЎРѕРґРµСЂР¶РёРјРѕРµ СЃС‚Р°С‚СЊРё
         content_text = soup.find('div', class_='tm-article-body')
         content = content_text.get_text(separator='\n', strip=True) if content_text else None
 
-        # Количество комментариев
+        # РљРѕР»РёС‡РµСЃС‚РІРѕ РєРѕРјРјРµРЅС‚Р°СЂРёРµРІ
         comments_text = soup.find('span', class_='tm-article-comments-counter-link__value')
         comments = int(comments_text.get_text(strip=True) if comments_text else 0)
 
-        # Количество просмотров
+        # РљРѕР»РёС‡РµСЃС‚РІРѕ РїСЂРѕСЃРјРѕС‚СЂРѕРІ
         views_text_ = soup.find('span', class_='tm-icon-counter__value')
         views_text = views_text_.get_text(strip=True) if views_text_ else '0'
         try:
@@ -422,20 +422,20 @@ async def parse_habr_article(
         except ValueError:
             views = -1
 
-        # Время прочтения в минутах
+        # Р’СЂРµРјСЏ РїСЂРѕС‡С‚РµРЅРёСЏ РІ РјРёРЅСѓС‚Р°С…
         reading_time_text = soup.find('span', class_='tm-article-reading-time__label')
         reading_time = (int(reading_time_text.get_text(strip=True).split()[0])
                         if reading_time_text else None)
 
-        # Количество добавлений в закладки
+        # РљРѕР»РёС‡РµСЃС‚РІРѕ РґРѕР±Р°РІР»РµРЅРёР№ РІ Р·Р°РєР»Р°РґРєРё
         bookmarks_text = soup.find('span', class_='bookmarks-button__counter')
         bookmark = int(bookmarks_text.get_text(strip=True)) if bookmarks_text else None
 
-        # Ссылки на картинки
+        # РЎСЃС‹Р»РєРё РЅР° РєР°СЂС‚РёРЅРєРё
         images = content_text.find_all("img") if content_text else []
         images_links = [img['src'] for img in images if img.has_attr('src')]
 
-        # Рейтинг статьи
+        # Р РµР№С‚РёРЅРі СЃС‚Р°С‚СЊРё
         article_rating_tag = soup.find('span', class_='tm-votes-meter__value')
         if article_rating_tag:
             article_rating = article_rating_tag.get_text(strip=True)
@@ -443,13 +443,13 @@ async def parse_habr_article(
             article_rating_tag = soup.find('span', class_='tm-votes-lever__score-counter')
             article_rating = article_rating_tag.get_text(strip=True) if article_rating_tag else '0'
 
-        # Позитивный или негативный рейтинг статьи
+        # РџРѕР·РёС‚РёРІРЅС‹Р№ РёР»Рё РЅРµРіР°С‚РёРІРЅС‹Р№ СЂРµР№С‚РёРЅРі СЃС‚Р°С‚СЊРё
         article_rating = article_rating or '0'
         positive_negative = 'negative' if '-' in article_rating else 'positive'
         article_rating_value = (int(float(article_rating.replace('+', '').replace('-', '')))
                                 if article_rating else 0)
 
-        # Создание итогового DataFrame со статьями
+        # РЎРѕР·РґР°РЅРёРµ РёС‚РѕРіРѕРІРѕРіРѕ DataFrame СЃРѕ СЃС‚Р°С‚СЊСЏРјРё
         data = {
             'Title': [title],
             'Author': [author],
@@ -469,33 +469,33 @@ async def parse_habr_article(
         }
         df = pd.DataFrame(data)
 
-    # Безопасное обновление счётчика из разных корутин
+    # Р‘РµР·РѕРїР°СЃРЅРѕРµ РѕР±РЅРѕРІР»РµРЅРёРµ СЃС‡С‘С‚С‡РёРєР° РёР· СЂР°Р·РЅС‹С… РєРѕСЂСѓС‚РёРЅ
         async with lock:
             counter[0] += 1
 
         return df
     except Exception as e:
-        logging.exception(f"Ошибка при парсинге страницы {url}: {e}")
+        logging.exception(f"РћС€РёР±РєР° РїСЂРё РїР°СЂСЃРёРЅРіРµ СЃС‚СЂР°РЅРёС†С‹ {url}: {e}")
         return None
 
 
-# Функция для разделения данных на n частей с равномерным распределением элементов
+# Р¤СѓРЅРєС†РёСЏ РґР»СЏ СЂР°Р·РґРµР»РµРЅРёСЏ РґР°РЅРЅС‹С… РЅР° n С‡Р°СЃС‚РµР№ СЃ СЂР°РІРЅРѕРјРµСЂРЅС‹Рј СЂР°СЃРїСЂРµРґРµР»РµРЅРёРµРј СЌР»РµРјРµРЅС‚РѕРІ
 def split_list(lst: List, n: int) -> List[List]:
     """
-    Разделяет список на n подсписков с равномерным распределением элементов внутри
+    Р Р°Р·РґРµР»СЏРµС‚ СЃРїРёСЃРѕРє РЅР° n РїРѕРґСЃРїРёСЃРєРѕРІ СЃ СЂР°РІРЅРѕРјРµСЂРЅС‹Рј СЂР°СЃРїСЂРµРґРµР»РµРЅРёРµРј СЌР»РµРјРµРЅС‚РѕРІ РІРЅСѓС‚СЂРё
 
-    Параметры:
-        lst (List): Исходный список для разделения
-        n (int): Количество подсписков для разделения
+    РџР°СЂР°РјРµС‚СЂС‹:
+        lst (List): РСЃС…РѕРґРЅС‹Р№ СЃРїРёСЃРѕРє РґР»СЏ СЂР°Р·РґРµР»РµРЅРёСЏ
+        n (int): РљРѕР»РёС‡РµСЃС‚РІРѕ РїРѕРґСЃРїРёСЃРєРѕРІ РґР»СЏ СЂР°Р·РґРµР»РµРЅРёСЏ
 
-    Возвращает:
-        List[List]: Список из n подсписков, содержащих элементы исходного списка
+    Р’РѕР·РІСЂР°С‰Р°РµС‚:
+        List[List]: РЎРїРёСЃРѕРє РёР· n РїРѕРґСЃРїРёСЃРєРѕРІ, СЃРѕРґРµСЂР¶Р°С‰РёС… СЌР»РµРјРµРЅС‚С‹ РёСЃС…РѕРґРЅРѕРіРѕ СЃРїРёСЃРєР°
     """
     k, m = divmod(len(lst), n)
     return [lst[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(n)]
 
 
-# Асинхронная функция получения статей
+# РђСЃРёРЅС…СЂРѕРЅРЅР°СЏ С„СѓРЅРєС†РёСЏ РїРѕР»СѓС‡РµРЅРёСЏ СЃС‚Р°С‚РµР№
 async def parse_article(
     urls: List[str],
     counter: List[int],
@@ -503,18 +503,18 @@ async def parse_article(
     semaphore_num: int = 20
 ) -> pd.DataFrame:
     """
-    Асинхронно получает и парсит статьи по списку URL
+    РђСЃРёРЅС…СЂРѕРЅРЅРѕ РїРѕР»СѓС‡Р°РµС‚ Рё РїР°СЂСЃРёС‚ СЃС‚Р°С‚СЊРё РїРѕ СЃРїРёСЃРєСѓ URL
 
-    Параметры:
-        urls (List[str]): Список URL-адресов статей для парсинга
-        counter (List[int]): Счётчик обработанных статей
-        lock (asyncio.Lock): Блокировка для безопасного обновления счётчика
-        semaphore_num (int): Максимальное количество одновременных запросов (по умолчанию 20)
+    РџР°СЂР°РјРµС‚СЂС‹:
+        urls (List[str]): РЎРїРёСЃРѕРє URL-Р°РґСЂРµСЃРѕРІ СЃС‚Р°С‚РµР№ РґР»СЏ РїР°СЂСЃРёРЅРіР°
+        counter (List[int]): РЎС‡С‘С‚С‡РёРє РѕР±СЂР°Р±РѕС‚Р°РЅРЅС‹С… СЃС‚Р°С‚РµР№
+        lock (asyncio.Lock): Р‘Р»РѕРєРёСЂРѕРІРєР° РґР»СЏ Р±РµР·РѕРїР°СЃРЅРѕРіРѕ РѕР±РЅРѕРІР»РµРЅРёСЏ СЃС‡С‘С‚С‡РёРєР°
+        semaphore_num (int): РњР°РєСЃРёРјР°Р»СЊРЅРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ РѕРґРЅРѕРІСЂРµРјРµРЅРЅС‹С… Р·Р°РїСЂРѕСЃРѕРІ (РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ 20)
 
-    Возвращает:
-        pd.DataFrame: DataFrame, содержащий данные по всем успешным парсингам статей
+    Р’РѕР·РІСЂР°С‰Р°РµС‚:
+        pd.DataFrame: DataFrame, СЃРѕРґРµСЂР¶Р°С‰РёР№ РґР°РЅРЅС‹Рµ РїРѕ РІСЃРµРј СѓСЃРїРµС€РЅС‹Рј РїР°СЂСЃРёРЅРіР°Рј СЃС‚Р°С‚РµР№
     """
-    # Ограничение до 20 одновременных запросов(чтобы получить все статьи на странице)
+    # РћРіСЂР°РЅРёС‡РµРЅРёРµ РґРѕ 20 РѕРґРЅРѕРІСЂРµРјРµРЅРЅС‹С… Р·Р°РїСЂРѕСЃРѕРІ(С‡С‚РѕР±С‹ РїРѕР»СѓС‡РёС‚СЊ РІСЃРµ СЃС‚Р°С‚СЊРё РЅР° СЃС‚СЂР°РЅРёС†Рµ)
     semaphore = asyncio.Semaphore(semaphore_num)
     async with aiohttp.ClientSession(headers=headers, cookies=cookies) as session:
         tasks = [parse_habr_article(url, session, semaphore, counter, lock) for url in urls]
@@ -524,12 +524,12 @@ async def parse_article(
             results.append(result)
         dfs = [df for df in results if df is not None]
         final_df = pd.concat(dfs, ignore_index=True)
-        # Выводим количество обработанных статей
-        print(f"Обработано {len(final_df)} статей")
+        # Р’С‹РІРѕРґРёРј РєРѕР»РёС‡РµСЃС‚РІРѕ РѕР±СЂР°Р±РѕС‚Р°РЅРЅС‹С… СЃС‚Р°С‚РµР№
+        print(f"РћР±СЂР°Р±РѕС‚Р°РЅРѕ {len(final_df)} СЃС‚Р°С‚РµР№")
         return final_df
 
 
-# Асинхронная обработка частей массива со статьями (hubs_parts)
+# РђСЃРёРЅС…СЂРѕРЅРЅР°СЏ РѕР±СЂР°Р±РѕС‚РєР° С‡Р°СЃС‚РµР№ РјР°СЃСЃРёРІР° СЃРѕ СЃС‚Р°С‚СЊСЏРјРё (hubs_parts)
 async def process_part(
     urls_chunk: List[str],
     part_number: int,
@@ -537,23 +537,23 @@ async def process_part(
     lock: asyncio.Lock
 ) -> None:
     """
-    Асинхронно обрабатывает часть URL для парсинга статей, сохраняет результаты в файл
+    РђСЃРёРЅС…СЂРѕРЅРЅРѕ РѕР±СЂР°Р±Р°С‚С‹РІР°РµС‚ С‡Р°СЃС‚СЊ URL РґР»СЏ РїР°СЂСЃРёРЅРіР° СЃС‚Р°С‚РµР№, СЃРѕС…СЂР°РЅСЏРµС‚ СЂРµР·СѓР»СЊС‚Р°С‚С‹ РІ С„Р°Р№Р»
 
-    Параметры:
-        urls_chunk (List[str]): Часть списка URL-адресов для парсинга
-        part_number (int): Номер текущей части (используется для имени файла)
-        counter (List[int]): Счётчик обработанных статей
-        lock (asyncio.Lock): Блокировка для безопасного обновления счётчика
+    РџР°СЂР°РјРµС‚СЂС‹:
+        urls_chunk (List[str]): Р§Р°СЃС‚СЊ СЃРїРёСЃРєР° URL-Р°РґСЂРµСЃРѕРІ РґР»СЏ РїР°СЂСЃРёРЅРіР°
+        part_number (int): РќРѕРјРµСЂ С‚РµРєСѓС‰РµР№ С‡Р°СЃС‚Рё (РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РґР»СЏ РёРјРµРЅРё С„Р°Р№Р»Р°)
+        counter (List[int]): РЎС‡С‘С‚С‡РёРє РѕР±СЂР°Р±РѕС‚Р°РЅРЅС‹С… СЃС‚Р°С‚РµР№
+        lock (asyncio.Lock): Р‘Р»РѕРєРёСЂРѕРІРєР° РґР»СЏ Р±РµР·РѕРїР°СЃРЅРѕРіРѕ РѕР±РЅРѕРІР»РµРЅРёСЏ СЃС‡С‘С‚С‡РёРєР°
 
-    Возвращает:
-        None: Функция сохраняет результат в файл и ничего не возвращает
+    Р’РѕР·РІСЂР°С‰Р°РµС‚:
+        None: Р¤СѓРЅРєС†РёСЏ СЃРѕС…СЂР°РЅСЏРµС‚ СЂРµР·СѓР»СЊС‚Р°С‚ РІ С„Р°Р№Р» Рё РЅРёС‡РµРіРѕ РЅРµ РІРѕР·РІСЂР°С‰Р°РµС‚
     """
-    # Ограничение до 50 одновременных запросов (для ускорения процесса берём ограничение больше,
-    # потерянные статьи обработаем отдельно)
+    # РћРіСЂР°РЅРёС‡РµРЅРёРµ РґРѕ 50 РѕРґРЅРѕРІСЂРµРјРµРЅРЅС‹С… Р·Р°РїСЂРѕСЃРѕРІ (РґР»СЏ СѓСЃРєРѕСЂРµРЅРёСЏ РїСЂРѕС†РµСЃСЃР° Р±РµСЂС‘Рј РѕРіСЂР°РЅРёС‡РµРЅРёРµ Р±РѕР»СЊС€Рµ,
+    # РїРѕС‚РµСЂСЏРЅРЅС‹Рµ СЃС‚Р°С‚СЊРё РѕР±СЂР°Р±РѕС‚Р°РµРј РѕС‚РґРµР»СЊРЅРѕ)
     final_df = await parse_article(urls_chunk, counter, lock, semaphore_num=50)
     if final_df is not None:
         filename = f'articles_part_{part_number}.parquet'
         final_df.to_parquet(filename, index=False)
-        print(f"Часть {part_number} сохранена в файл {filename}")
+        print(f"Р§Р°СЃС‚СЊ {part_number} СЃРѕС…СЂР°РЅРµРЅР° РІ С„Р°Р№Р» {filename}")
     else:
-        print(f"Нет данных для сохранения в части {part_number}")
+        print(f"РќРµС‚ РґР°РЅРЅС‹С… РґР»СЏ СЃРѕС…СЂР°РЅРµРЅРёСЏ РІ С‡Р°СЃС‚Рё {part_number}")
