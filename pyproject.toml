@@ -1,0 +1,32 @@
+[tool.poetry]
+name = "hse-habr2024"
+version = "0.1.0"
+description = ""
+authors = ["Team 37"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+streamlit = "^1.41.1"
+numpy = "^2.2.0"
+pandas = "^2.2.3"
+matplotlib = "^3.10.0"
+requests = "^2.32.3"
+pydantic = "^2.10.4"
+scikit-learn = "^1.6.0"
+fastapi = "^0.115.6"
+uvicorn = "^0.34.0"
+
+[tool.poetry.group.dev.dependencies]
+pyproject-flake8 = "^6.1.0"
+black = "^24.10.0"
+isort = "^5.13.2"
+
+[tool.flake8]
+max-line-length = 100
+extend-ignore = ["F403", "F401"]
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
