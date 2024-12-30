@@ -37,7 +37,11 @@ logger.addHandler(handler)
 
 # Настройка приложения
 st.set_page_config(page_title="Habr ML App", layout="wide")
-API_URL = "http://127.0.0.1:8000"
+# Если запуск через скрипт main_mvp.py
+# API_URL = "http://127.0.0.1:8000"
+
+#  Если запуск через контейнер в Docker
+API_URL = "http://fastapi:8000"
 
 
 # Взаимодействие с API
