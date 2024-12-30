@@ -504,5 +504,6 @@ async def plt_curve(
         logger.error(err_msg)
         raise HTTPException(status_code=500, detail=err_msg)
 
-if __name__ == "__main__":
-    uvicorn.run("api_mvp:app", host="127.0.0.1", port=8000, reload=True)
+# Если запускаемся через скрипт main_mvp.py
+# if __name__ == "__main__":
+#    uvicorn.run("api_mvp:app", host="127.0.0.1", port=8000, reload=True)
