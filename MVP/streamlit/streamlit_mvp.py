@@ -37,7 +37,11 @@ logger.addHandler(handler)
 
 # Настройка приложения
 st.set_page_config(page_title="Habr ML App", layout="wide")
-API_URL = "http://127.0.0.1:8000"
+# Если запуск через скрипт main_mvp.py
+# API_URL = "http://127.0.0.1:8000"
+
+#  Если запуск через контейнер в Docker
+API_URL = "http://fastapi:8000"
 
 
 # Взаимодействие с API
@@ -184,6 +188,11 @@ def page_upload_data():
 # Страница EDA
 def page_eda():
     st.header("2. Exploratory Data Analysis")
+    # Проверяем наличие датасета
+    if st.session_state.df is None:
+        st.warning(
+            "Сначала загрузите датасет на предыдущей странице.")
+        return
     df = st.session_state["df"]
     df['parsed_tokens'] = df['text_tokens'].apply(parse_tokens)
     df['parsed_tags'] = df['tags_tokens'].apply(parse_tokens)
@@ -286,6 +295,11 @@ def page_eda():
 # Страница Train Model
 def page_train_model():
     st.header("3. Создание и обучение новой модели")
+    # Проверяем наличие датасета
+    if st.session_state.df is None:
+        st.warning(
+            "Сначала загрузите и предобработайте датасет на первой странице.")
+        return
 
     st.write("Настройте гиперпараметры и обучите новую модель.")
 
@@ -398,12 +412,18 @@ def page_model_info():
                     st.error(f"Ошибка при установке модели: {req_set.text}")
                     logger.error(f"Ошибка при вызове /set: {req_set.text}")
 
+            # Проверяем наличие датасета
+            if st.session_state.df is None:
+                st.warning(
+                    """Для построения кривых обучения загрузите
+                       и предобработайте датасет на первой странице.""")
+                return
             if "active_model_id" in st.session_state:
                 st.subheader("Построение кривых обучения для активной модели")
                 cv = st.number_input("Количество фолдов (cv)", min_value=2,
                                      max_value=10, value=5)
                 scoring = st.selectbox("Метрика (scoring)",
-                                       ["f1_macro", "f1_weighted", "roc_auc"])
+                                       ["f1_macro", "f1_weighted"])
 
                 if st.button("Показать кривые обучения"):
                     with st.spinner("Генерация и загрузка кривых обучения..."):
@@ -418,6 +438,11 @@ def page_model_info():
 # Страница Predict
 def page_inference():
     st.header("5. Инференс с использованием выбранной модели")
+    # Проверяем наличие датасета
+    if st.session_state.df is None:
+        st.warning(
+            "Сначала загрузите и предобработайте датасет на первой странице.")
+        return
 
     # Инициализация ключа в session_state, если он отсутствует
     if "active_model_id" not in st.session_state:
