@@ -450,7 +450,7 @@ if __name__ == "__main__":
 async def plt_curve(
     model_id: str,
     cv: int = 3,
-    scoring: str = "f1_macro",
+    scoring: str = "f1_micro",
 ):
     """
     Генерирует кривую обучения сразу для двух пайплайнов модели (rating и hubs)
