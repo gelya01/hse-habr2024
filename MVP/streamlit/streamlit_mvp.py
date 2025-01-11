@@ -423,7 +423,7 @@ def page_model_info():
                 cv = st.number_input("Количество фолдов (cv)", min_value=2,
                                      max_value=10, value=5)
                 scoring = st.selectbox("Метрика (scoring)",
-                                       ["f1_macro", "f1_weighted"])
+                                       ["f1_micro", "f1_macro", "f1_weighted"])
 
                 if st.button("Показать кривые обучения"):
                     with st.spinner("Генерация и загрузка кривых обучения..."):
