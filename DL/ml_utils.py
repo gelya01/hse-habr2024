@@ -227,10 +227,11 @@ def plot_history(train_loss, train_f1, val_loss, val_f1,
     Рисует графики зависимости loss и accuracy (F1) от эпохи.
 
     Параметры:
-    - train_loss, train_f1: списки float длины n_epochs
-    - val_loss, val_f1: списки float длины n_epochs
-    - val_prec, val_rec, val_ham: (опционально) списки float длины n_epochs
-    - figsize: размер фигуры
+    train_loss : Список значений потерь на train данных, записанных на каждом шаге обучения.
+    train_f1 : Список значений F1-score на train данных, записанных на каждом шаге обучения.
+    val_loss : Список значений loss на test данных, записанных в конце каждой эпохи.
+    val_f1 : Список значений F1-score на test данных, записанных в конце каждой эпохи.
+    steps_per_epoch : Количество шагов обучения (батчей) в одной эпохе
     """
     total_steps = len(train_loss)
     x_train = np.arange(total_steps)
@@ -241,7 +242,7 @@ def plot_history(train_loss, train_f1, val_loss, val_f1,
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=figsize)
 
-    # ——— LOSS ———
+    # LOSS
     ax1.plot(x_train, train_loss, alpha=0.6, label='train')
     ax1.scatter(x_val, val_loss, color='orange', label='val')
     ax1.set_title('loss')
@@ -250,7 +251,7 @@ def plot_history(train_loss, train_f1, val_loss, val_f1,
     ax1.grid(True)
     ax1.legend()
 
-    # ——— ACCURACY (F1) ———
+    # ACCURACY (F1)
     ax2.plot(x_train, train_f1, alpha=0.6, label='train')
     ax2.scatter(x_val, val_f1, color='orange', label='val')
     ax2.set_title('F1-score')
