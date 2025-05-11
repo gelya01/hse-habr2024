@@ -221,8 +221,7 @@ def categorize_ratings(sample_df: DataFrame) -> Series:
 
 
 # Функция построени графиков зависимости lost и f1-score от эпохи
-def plot_history(train_loss, train_f1, val_loss, val_f1,
-                 steps_per_epoch, figsize=(12, 5)):
+def plot_history(train_loss, train_f1, test_loss, test_f1, figsize=(12, 5)):
     """
     Рисует графики зависимости loss и accuracy (F1) от эпохи.
 
@@ -231,20 +230,13 @@ def plot_history(train_loss, train_f1, val_loss, val_f1,
     train_f1 : Список значений F1-score на train данных, записанных на каждом шаге обучения.
     val_loss : Список значений loss на test данных, записанных в конце каждой эпохи.
     val_f1 : Список значений F1-score на test данных, записанных в конце каждой эпохи.
-    steps_per_epoch : Количество шагов обучения (батчей) в одной эпохе
     """
-    total_steps = len(train_loss)
-    x_train = np.arange(total_steps)
-
-    # точки валидации: после каждой эпохи
-    epochs = np.arange(len(val_loss)) + 1
-    x_val = epochs * steps_per_epoch
-
+    epochs = range(len(train_loss))
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=figsize)
 
     # LOSS
-    ax1.plot(x_train, train_loss, alpha=0.6, label='train')
-    ax1.scatter(x_val, val_loss, color='orange', label='val')
+    ax1.plot(epochs, train_loss, label='train')
+    ax1.plot(epochs, test_loss, color='orange', label='test')
     ax1.set_title('loss')
     ax1.set_xlabel('train steps')
     ax1.set_ylabel('loss')
@@ -252,8 +244,8 @@ def plot_history(train_loss, train_f1, val_loss, val_f1,
     ax1.legend()
 
     # ACCURACY (F1)
-    ax2.plot(x_train, train_f1, alpha=0.6, label='train')
-    ax2.scatter(x_val, val_f1, color='orange', label='val')
+    ax2.plot(epochs, train_f1, label='train')
+    ax2.plot(epochs, test_f1, color='orange', label='test')
     ax2.set_title('F1-score')
     ax2.set_xlabel('train steps')
     ax2.set_ylabel('F1')
