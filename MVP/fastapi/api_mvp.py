@@ -78,7 +78,7 @@ try:
     logger.info("Предобученные модели успешно загружены")
 
 except Exception as e:
-    logger.error(f"Не удалоись загрузить предобученные модели: {e}")
+    logger.error(f"Не удалось загрузить предобученные модели: {e}")
 
 
 # Необходимые классы
@@ -154,7 +154,8 @@ def create_pipeline(config: PipelineConfig) -> Pipeline:
 # Вспомогательная функция обучения
 def _train_model_func(
     config_dict: Dict[str, Union[str, Dict]],
-    X_list: List[str],
+    X_hubs_list: List[str],
+    X_rating_list: List[str],
     y_rating_list: List[Union[int, float]],
     y_hubs_list: List[List[int]],
     return_dict: multiprocessing.managers.DictProxy
@@ -170,10 +171,10 @@ def _train_model_func(
         logger.info(f"Процесс обучения модели '{config_obj.id}' начался")
 
         rating_pipeline = create_pipeline(config_obj)
-        rating_pipeline.fit(X_list, y_rating_list)
+        rating_pipeline.fit(X_rating_list, y_rating_list)
 
         hubs_pipeline = create_pipeline(config_obj)
-        hubs_pipeline.fit(X_list, y_hubs_list)
+        hubs_pipeline.fit(X_hubs_list, y_hubs_list)
 
         return_dict["rating_pipeline"] = rating_pipeline
         return_dict["hubs_pipeline"] = hubs_pipeline
@@ -207,11 +208,10 @@ async def preprocess(file: UploadFile):
                             detail=f"Ошибка при чтении файла: {e}")
 
     # Проверка на наличие необходимых столбцов
-    required_columns = ['author', 'publication_date', 'hubs', 'comments',
-                        'views', 'url', 'reading_time', 'individ/company',
-                        'bookmarks_cnt', 'text_length', 'tags_tokens',
-                        'title_tokens', 'rating_new', 'text_tokens',
-                        'text_pos_tags', 'rating_level']
+    required_columns = ['author', 'publication_date', 'hubs', 'comments', 'views', 'url',
+                        'reading_time', 'individ/company', 'bookmarks_cnt', 'text_length',
+                        'rating_new', 'text_pos_tags', 'tags_tokens', 'title_tokens',
+                        'text_tokens']
     missing_cols = set(required_columns) - set(df.columns)
     if missing_cols:
         logger.error(f"Не хватает столбцов в /preprocess: {missing_cols}")
@@ -220,8 +220,10 @@ async def preprocess(file: UploadFile):
 
     # Предобработка текстовых данных
     try:
-        (df, y_multi_reduced, selector, index_to_label, mlb,
-         y_rating, inverse_rating_mapping) = mu.df_preprocess(df)
+        df['rating_level'] = mu.categorize_ratings(df)
+        (df, y_multi_reduced, selector,
+         index_to_label, mlb,
+         y_rating, inverse_rating_mapping, indices) = mu.df_preprocess(df)
         logger.info("Данные успешно предобработаны")
     except Exception as e:
         logger.error(f"Ошибка при предобработке: {e}")
@@ -236,6 +238,7 @@ async def preprocess(file: UploadFile):
     data_stor["index_to_label"] = index_to_label
     data_stor["mlb"] = mlb
     data_stor["inverse_rating_mapping"] = inverse_rating_mapping
+    data_stor['indices'] = indices
 
     return PreprocessResponse(message="Данные предобработаны")
 
@@ -266,7 +269,10 @@ async def fit(config: str):
 
     # Извлечение X, y_rating и y_hubs
     df = data_stor['df']
+    indices = data_stor['indices']
     X = df["text_combined"]
+    X_hubs = X.iloc[indices].copy()
+    X_rating = X.copy()
     y_rating = data_stor['y_rating']
     y_hubs = data_stor['y_multi_reduced']
 
@@ -280,7 +286,8 @@ async def fit(config: str):
     # Создаём процесс
     p = mp.Process(
         target=_train_model_func,
-        args=(config_dict, list(X), list(y_rating), list(y_hubs), return_dict)
+        args=(config_dict, list(X_hubs), list(X_rating),
+              list(y_rating), list(y_hubs), return_dict)
     )
 
     p.start()
@@ -369,6 +376,7 @@ async def predict(config: str):
     index_to_label = data_stor['index_to_label']
     mlb = data_stor['mlb']
     irm = data_stor['inverse_rating_mapping']
+    indices = data_stor['indices']
 
     if any(param is None for param in [selector, index_to_label,
                                        mlb, irm]):
@@ -378,9 +386,10 @@ async def predict(config: str):
             detail="Вспомогательные параметры отсутствуют в /predict")
     try:
         # Предикт
-        result_df = mu.predict_func(df=df, selector=selector,
+        result_df = mu.predict_func(model_id=model_id, df=df, selector=selector,
                                     index_to_label=index_to_label, mlb=mlb,
                                     inverse_rating_mapping=irm,
+                                    indices=indices,
                                     model_hubs=model_hubs,
                                     model_rating=model_rating)
         logger.info("Предсказание успешно")
@@ -473,17 +482,20 @@ async def plt_curve(
 
         # Данные
         df = data_stor["df"]
+        indices = data_stor["indices"]
         X = df["text_combined"]
+        X_hubs = X.iloc[indices].copy()
+        X_rating = X.copy()
         y_rating = data_stor["y_rating"]
         y_hubs = data_stor["y_multi_reduced"]
 
         # Генерируем графики
         rating_filename = mu.plot_learning_curve(
-            model_rating_pipeline, X, y_rating, cv=cv, scoring=scoring,
+            model_rating_pipeline, X_rating, y_rating, cv=cv, scoring=scoring,
             save_path=curves_dir, model_id=model_id, curve_type="rating"
         )
         hubs_filename = mu.plot_learning_curve(
-            model_hubs_pipeline, X, y_hubs, cv=cv, scoring=scoring,
+            model_hubs_pipeline, X_hubs, y_hubs, cv=cv, scoring=scoring,
             save_path=curves_dir, model_id=model_id, curve_type="hubs"
         )
 

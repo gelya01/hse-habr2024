@@ -11,7 +11,6 @@ from nltk import FreqDist
 from collections import Counter
 import plotly.express as px
 import itertools
-from typing import List
 
 # Логирование
 # Создаём папку logs, если её нет
@@ -128,17 +127,6 @@ def show_learning_curves(model_id: str, cv: int, scoring: str):
         st.error(f"Произошла ошибка при загрузке кривых: {str(e)}")
 
 
-# Функция для формирования списка слов из всех токенов
-def parse_tokens(row: pd.Series) -> List[str]:
-    """
-    Убираем лишние символы, такие как кавычки и перевод строк
-    И формируем список слов
-    """
-    # Убираем лишние символы, такие как кавычки и перевод строк
-    cleaned_row = row.replace('\n', '').replace("'", "").strip()
-    return cleaned_row.strip("[]").split()
-
-
 # Предикт
 def predict_model(config_json_str: str):
     """
@@ -194,8 +182,6 @@ def page_eda():
             "Сначала загрузите датасет на предыдущей странице.")
         return
     df = st.session_state["df"]
-    df['parsed_tokens'] = df['text_tokens'].apply(parse_tokens)
-    df['parsed_tags'] = df['tags_tokens'].apply(parse_tokens)
     numeric_columns = (df.select_dtypes(include=["int64", "float64"])
                        .columns.tolist())
     # Выбор анализа
@@ -240,7 +226,7 @@ def page_eda():
 
     # Частотное распределение
     elif analysis_type == 'Топ-10 частотных слов':
-        all_tokens = [tok for toks in df['parsed_tokens'] for tok in toks]
+        all_tokens = [tok for toks in df['text_tokens'] for tok in toks]
         freq_dist = FreqDist(all_tokens)
         freq_df = pd.DataFrame(freq_dist.most_common(10),
                                columns=['Слово', 'Частота'])
@@ -266,9 +252,9 @@ def page_eda():
             "Выберите текстовую колонку", list(['Text', 'Tags'])
         )
         if text_column == 'Text':
-            all_tokens = [tok for toks in df['parsed_tokens'] for tok in toks]
+            all_tokens = [tok for toks in df['text_tokens'] for tok in toks]
         elif text_column == 'Tags':
-            all_tokens = [tok for toks in df['parsed_tags'] for tok in toks]
+            all_tokens = [tok for toks in df['tags_tokens'] for tok in toks]
         word_counts = Counter(all_tokens)
         wordcloud = WordCloud(
             width=800, height=400, background_color="white"
